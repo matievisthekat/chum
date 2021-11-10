@@ -1,6 +1,6 @@
 use std::env;
 
-struct Cli {
+pub struct Cli {
   version: String,
   flag_identifier: String,
   known_commands: Vec<String>,
@@ -10,7 +10,7 @@ struct Cli {
 }
 
 impl Cli {
-  fn new(flag_identifier: &str, version: &str) -> Self {
+  pub fn new(flag_identifier: &str, version: &str) -> Self {
     let cli = Cli {
       version: version.to_string(),
       flag_identifier: flag_identifier.to_string(),
@@ -39,7 +39,7 @@ impl Cli {
 
     if args.len() > 0 {
       self.command = args[0].clone();
-      self.args = args.clone()[1..];
+      self.args = args.clone()[1..].to_vec();
     }
 
     self
