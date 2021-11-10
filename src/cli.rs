@@ -1,5 +1,6 @@
 use std::env;
 
+#[derive(Debug)]
 pub struct Cli {
   version: String,
   flag_identifier: String,
