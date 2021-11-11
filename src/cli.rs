@@ -4,7 +4,7 @@ use std::env;
 type Handler = Box<dyn Fn(&Context) -> Result>;
 
 // The exit code and message to return to the shell
-type Result = std::result::Result<i8, (i8, String)>;
+type Result = std::result::Result<i32, (i32, String)>;
 
 pub struct Context<'lt> {
   pub cli: &'lt Cli,
@@ -38,16 +38,13 @@ impl Cli {
     cli
   }
 
-  pub fn run(&self) -> &Self {
+  pub fn run(&self) {
     let command_handler = self.command_handlers.get(&self.command);
     let context = Context {
       cli: self.clone(),
       args: self.args.clone(),
     };
-    let mut exit: Result = Err((
-      1,
-      "No result returned from command handler. Please report this".to_string(),
-    ));
+    let exit: Result;
 
     if self.command.is_empty() && self.flags.len() > 0 {
       let flag_handler = self.flag_handlers.get(&self.flags[0]);
@@ -56,7 +53,13 @@ impl Cli {
       exit = self.match_command_handler(command_handler, &context);
     }
 
-    self
+    match exit {
+      Ok(code) => std::process::exit(code),
+      Err((code, message)) => {
+        eprintln!("{}", message);
+        std::process::exit(code)
+      }
+    }
   }
 
   pub fn register_command(&mut self, command: &str, handler: Handler) {
@@ -72,9 +75,9 @@ impl Cli {
       Some(handler) => return handler(context),
       None => {
         if self.command.is_empty() {
-          return Err((1, "No command specified".to_string()));
+          return Err((127, "No command specified".to_string()));
         } else {
-          return Err((1, format!("Unknown command: {}", self.command)));
+          return Err((127, format!("Unknown command: {}", self.command)));
         }
       }
     };
