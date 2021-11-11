@@ -1,30 +1,93 @@
+use std::collections::HashMap;
 use std::env;
 
-#[derive(Debug)]
+type Handler = Box<dyn Fn(&Context) -> Result>;
+
+// The exit code and message to return to the shell
+type Result = std::result::Result<i8, (i8, String)>;
+
+pub struct Context<'lt> {
+  pub cli: &'lt Cli,
+  pub args: Vec<String>,
+}
+
 pub struct Cli {
-  version: String,
+  pub version: String,
   flag_identifier: String,
-  known_commands: Vec<String>,
+  command_handlers: HashMap<String, Handler>,
   command: String,
+  flag_handlers: HashMap<String, Handler>,
   flags: Vec<String>,
   args: Vec<String>,
 }
 
 impl Cli {
   pub fn new(flag_identifier: &str, version: &str) -> Self {
-    let cli = Cli {
+    let mut cli = Cli {
       version: version.to_string(),
       flag_identifier: flag_identifier.to_string(),
-      known_commands: vec![],
+      command_handlers: HashMap::new(),
       command: "".to_string(),
+      flag_handlers: HashMap::new(),
       flags: vec![],
       args: vec![],
     };
 
-    cli.parse()
+    cli.parse();
+
+    cli
   }
 
-  fn parse(mut self) -> Self {
+  pub fn run(&self) -> &Self {
+    let command_handler = self.command_handlers.get(&self.command);
+    let context = Context {
+      cli: self.clone(),
+      args: self.args.clone(),
+    };
+    let mut exit: Result = Err((
+      1,
+      "No result returned from command handler. Please report this".to_string(),
+    ));
+
+    if self.command.is_empty() && self.flags.len() > 0 {
+      let flag_handler = self.flag_handlers.get(&self.flags[0]);
+      exit = self.match_flag_handler(flag_handler, &context);
+    } else {
+      exit = self.match_command_handler(command_handler, &context);
+    }
+
+    self
+  }
+
+  pub fn register_command(&mut self, command: &str, handler: Handler) {
+    self.command_handlers.insert(command.to_string(), handler);
+  }
+
+  pub fn register_flag(&mut self, flag: &str, handler: Handler) {
+    self.flag_handlers.insert(flag.to_string(), handler);
+  }
+
+  fn match_command_handler(&self, command_handler: Option<&Handler>, context: &Context) -> Result {
+    match command_handler {
+      Some(handler) => return handler(context),
+      None => {
+        if self.command.is_empty() {
+          return Err((1, "No command specified".to_string()));
+        } else {
+          return Err((1, format!("Unknown command: {}", self.command)));
+        }
+      }
+    };
+  }
+
+  fn match_flag_handler(&self, flag_handler: Option<&Handler>, context: &Context) -> Result {
+    match flag_handler {
+      Some(handler) => return handler(context),
+      None => return Err((1, format!("Unknown flag: {}", self.flags[0]))),
+    }
+  }
+
+  fn parse(&mut self) -> &Self {
     let all_args: Vec<String> = env::args().skip(1).collect();
     let prefix = self.flag_identifier.as_str();
     let mut args = vec![];
