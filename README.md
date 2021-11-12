@@ -7,3 +7,9 @@
 ---
 
 <div align="center"><h3>🚧 --- Currently under construction --- 🚧</h3></div>
+
+---
+
+#### Proposed
+- On initialize, store a complete compressed version of the project
+- From then on, for every 'commit' (will call it something different) store a compressed file that describes the changes made in the 'commit'
