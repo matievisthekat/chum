@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::env;
 use termcolor::ColorChoice;
 
-use crate::lib::{commands, display::Display};
+use crate::lib::{command_manager, display::Display};
 
 pub struct Context<'lt> {
   pub cli: &'lt Cli,
@@ -14,9 +14,9 @@ pub struct Cli {
   pub version: String,
   flag_identifier: String,
   wanted_command: String,
-  commands: HashMap<String, commands::Command>,
+  commands: HashMap<String, command_manager::Command>,
   flags: Vec<String>,
-  flag_handlers: HashMap<String, commands::Handler>,
+  flag_handlers: HashMap<String, command_manager::Handler>,
   args: Vec<String>,
 }
 
@@ -39,7 +39,7 @@ impl Cli {
 
   pub fn run(&self) {
     let command = self.commands.get(&self.wanted_command);
-    let exit: commands::Result;
+    let exit: command_manager::Result;
     let display = Display::new(ColorChoice::Auto);
     let context = Context {
       cli: self.clone(),
@@ -64,19 +64,19 @@ impl Cli {
     }
   }
 
-  pub fn register_command(&mut self, command: commands::Command) {
+  pub fn register_command(&mut self, command: command_manager::Command) {
     self.commands.insert(command.name.clone(), command);
   }
 
-  pub fn register_flag(&mut self, flag: &str, handler: commands::Handler) {
+  pub fn register_flag(&mut self, flag: &str, handler: command_manager::Handler) {
     self.flag_handlers.insert(flag.to_string(), handler);
   }
 
   fn run_command(
     &self,
-    command: Option<&commands::Command>,
+    command: Option<&command_manager::Command>,
     context: &Context,
-  ) -> commands::Result {
+  ) -> command_manager::Result {
     match command {
       Some(command) => {
         let handler = &command.handler;
@@ -94,9 +94,9 @@ impl Cli {
 
   fn match_flag_handler(
     &self,
-    flag_handler: Option<&commands::Handler>,
+    flag_handler: Option<&command_manager::Handler>,
     context: &Context,
-  ) -> commands::Result {
+  ) -> command_manager::Result {
     match flag_handler {
       Some(handler) => return handler(context),
       None => return Err((1, format!("Unknown flag: {}", self.flags[0]))),
