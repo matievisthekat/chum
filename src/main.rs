@@ -1,4 +1,5 @@
-use lib;
+mod lib;
+use lib::{cli, display};
 
 fn main() {
     const FLAG_IDENTIFIER: &str = ".";
@@ -9,6 +10,14 @@ fn main() {
         "foo",
         Box::new(|_| {
             println!("Bar");
+            return Ok(0);
+        }),
+    );
+
+    cli.register_command(
+        "bar",
+        Box::new(|_| {
+            display::info("test");
             return Ok(0);
         }),
     );

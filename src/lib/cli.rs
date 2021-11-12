@@ -6,8 +6,8 @@ type Handler = Box<dyn Fn(&Context) -> Result>;
 // The exit code and message to return to the shell
 type Result = std::result::Result<i32, (i32, String)>;
 
-pub struct Context {
-  pub cli: &'static Cli,
+pub struct Context<'lt> {
+  pub cli: &'lt Cli,
   pub args: Vec<String>,
 }
 
