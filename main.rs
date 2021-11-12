@@ -1,4 +1,4 @@
-mod cli;
+use lib;
 
 fn main() {
     const FLAG_IDENTIFIER: &str = ".";
