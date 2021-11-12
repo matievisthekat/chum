@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="https://github.com/matievisthekat/chum/blob/master/spean.png?raw=true" width="100" />
+  <img src="https://github.com/matievisthekat/chum/blob/master/chum.png?raw=true" width="100" />
   <h1>Chum</h1>
   A simpler alternative to Git
 </div>
