@@ -1,11 +1,13 @@
 use std::collections::HashMap;
 use std::env;
+use termcolor::ColorChoice;
 
-use crate::lib::commands;
+use crate::lib::{commands, display::Display};
 
 pub struct Context<'lt> {
   pub cli: &'lt Cli,
   pub args: Vec<String>,
+  pub display: Display,
 }
 
 pub struct Cli {
@@ -37,11 +39,13 @@ impl Cli {
 
   pub fn run(&self) {
     let command = self.commands.get(&self.wanted_command);
+    let exit: commands::Result;
+    let display = Display::new(ColorChoice::Auto);
     let context = Context {
       cli: self.clone(),
       args: self.args.clone(),
+      display: display,
     };
-    let exit: commands::Result;
 
     // if no command supplied, and at least one flag supplied
     if self.wanted_command.is_empty() && self.flags.len() > 0 {
