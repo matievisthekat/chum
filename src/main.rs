@@ -1,5 +1,5 @@
 mod lib;
-use lib::{cli, command_manager, compression};
+use lib::{cli, command_manager, compression, display};
 use std::fs::File;
 
 fn main() {
@@ -13,8 +13,8 @@ fn main() {
         vec!["bar .baz".to_string()],
         vec![("File to run".to_string(), true)],
         vec!["baz".to_string()],
-        Box::new(|ctx| {
-            ctx.display.info("Running foo".to_string());
+        Box::new(|_| {
+            display::info("Running foo".to_string());
             Ok(0)
         }),
     ));
