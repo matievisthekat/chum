@@ -1,6 +1,5 @@
 use std::collections::HashMap;
 use std::env;
-use termcolor::ColorChoice;
 
 use crate::lib::{command_manager};
 
