@@ -1,6 +1,6 @@
 use crate::lib::command_manager::Command;
 
-pub fn command_info() -> Command {
+pub fn get_command() -> Command {
   Command {
     name: "help".to_string(),
     description: "Display help information for a command".to_string(),
