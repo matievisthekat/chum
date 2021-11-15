@@ -1,38 +1,52 @@
 use std::collections::HashMap;
 use std::env;
 
-use crate::lib::{command_manager};
+use crate::lib::command_manager;
 
 pub struct Context<'lt> {
   pub cli: &'lt Cli,
-  pub args: Vec<String>,
 }
 
 pub struct Cli {
   pub version: String,
-  flag_identifier: String,
+  pub commands: HashMap<String, command_manager::Command>,
+  pub args: Vec<String>,
+  pub flags: Vec<String>,
   wanted_command: String,
-  commands: HashMap<String, command_manager::Command>,
-  flags: Vec<String>,
   flag_handlers: HashMap<String, command_manager::Handler>,
-  args: Vec<String>,
 }
 
 impl Cli {
   pub fn new(flag_identifier: &str, version: &str) -> Self {
-    let mut cli = Cli {
+    let all_args: Vec<String> = env::args().skip(1).collect();
+    let prefix = flag_identifier;
+    let mut args = vec![];
+    let mut pure_args = vec![];
+    let mut flags = vec![];
+    let mut wanted_command = String::new();
+
+    for arg in all_args {
+      if arg.starts_with(prefix) {
+        let flag = arg.replace(prefix, "");
+        flags.push(flag);
+      } else {
+        args.push(arg);
+      }
+    }
+
+    if args.len() > 0 {
+      wanted_command = args[0].clone();
+      pure_args = args.clone()[1..].to_vec();
+    }
+
+    Cli {
       version: version.to_string(),
-      flag_identifier: flag_identifier.to_string(),
-      wanted_command: "".to_string(),
+      wanted_command: wanted_command,
       commands: HashMap::new(),
-      flags: vec![],
+      flags: flags,
       flag_handlers: HashMap::new(),
-      args: vec![],
-    };
-
-    cli.parse();
-
-    cli
+      args: pure_args,
+    }
   }
 
   pub fn run(&self) {
@@ -40,7 +54,6 @@ impl Cli {
     let exit: command_manager::Result;
     let context = Context {
       cli: self.clone(),
-      args: self.args.clone(),
     };
 
     // if no command supplied, and at least one flag supplied
@@ -97,27 +110,5 @@ impl Cli {
       Some(handler) => return handler(context),
       None => return Err((1, format!("Unknown flag: {}", self.flags[0]))),
     }
-  }
-
-  fn parse(&mut self) -> &Self {
-    let all_args: Vec<String> = env::args().skip(1).collect();
-    let prefix = self.flag_identifier.as_str();
-    let mut args = vec![];
-
-    for arg in all_args {
-      if arg.starts_with(prefix) {
-        let flag = arg.replace(prefix, "");
-        self.flags.push(flag);
-      } else {
-        args.push(arg);
-      }
-    }
-
-    if args.len() > 0 {
-      self.wanted_command = args[0].clone();
-      self.args = args.clone()[1..].to_vec();
-    }
-
-    self
   }
 }
