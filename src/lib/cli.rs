@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::env;
 
-use crate::lib::command_manager;
+use crate::lib::{command_manager, display};
 
 pub struct Context<'lt> {
   pub cli: &'lt Cli,
@@ -52,9 +52,7 @@ impl Cli {
   pub fn run(&self) {
     let command = self.commands.get(&self.wanted_command);
     let exit: command_manager::Result;
-    let context = Context {
-      cli: self.clone(),
-    };
+    let context = Context { cli: self.clone() };
 
     // if no command supplied, and at least one flag supplied
     if self.wanted_command.is_empty() && self.flags.len() > 0 {
@@ -67,7 +65,7 @@ impl Cli {
     match exit {
       Ok(code) => std::process::exit(code),
       Err((code, message)) => {
-        eprintln!("{}", message);
+        display::error(message);
         std::process::exit(code)
       }
     }
