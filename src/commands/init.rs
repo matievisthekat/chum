@@ -14,18 +14,41 @@ pub fn get_command() -> Command {
     allowed_flags: vec!["force".to_string()],
     handler: Box::new(|ctx| {
       let default_dir = ".".to_string();
-      let dir = ctx.cli.args.first().unwrap_or(&default_dir);
-      let chum_dir = Path::new(dir).join(".chum");
+      let target = Path::new(ctx.cli.args.first().unwrap_or(&default_dir));
+      let chum_dir = Path::new(target).join(".chum");
+
+      if target.exists() {
+        let dir_metadata = fs::metadata(&target).unwrap();
+        if dir_metadata.is_file() {
+          return Err((
+            1,
+            format!(
+              "{} is a file. Please specify a directory to initialize a chum project in",
+              target.display()
+            ),
+          ));
+        }
+      }
 
       if chum_dir.exists() {
         let chum_metadata = fs::metadata(&chum_dir).unwrap();
-        if chum_metadata.is_dir() && !ctx.cli.flags.contains(&"force".to_string()) {
-          display::info(format!(
-            "{} already exists. Use the 'force' flag to wipe and reinitialize the .chum directory",
-            util::get_full_path(chum_dir.clone()).display()
-          ));
-
-          return Ok(0);
+        if chum_metadata.is_dir() {
+          if ctx.cli.flags.contains(&"force".to_string()) {
+            let result = fs::remove_dir_all(&chum_dir);
+            match result {
+              Ok(_) => {
+                display::info("Removed existing chum project due to 'force' flag".to_string());
+              }
+              Err(e) => {
+                return Err((1, format!("Failed to remove existing chum project: {}", e)));
+              }
+            }
+          } else {
+            return Err((1, format!(
+              "Chum project ({}) already exists. Use the 'force' flag to wipe and reinitialize the .chum directory",
+              util::get_full_path(chum_dir.clone()).display()
+            )));
+          }
         } else if chum_metadata.is_file() {
           return Err((
             1,
@@ -43,7 +66,6 @@ pub fn get_command() -> Command {
         util::get_full_path(chum_dir.clone()).display()
       ));
 
-      // TODO: Create new .chumrc file
       // TODO: Create initial compressed files
 
       Ok(0)
