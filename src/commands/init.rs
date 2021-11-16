@@ -17,19 +17,31 @@ pub fn get_command() -> Command {
       let target = Path::new(ctx.cli.args.first().unwrap_or(&default_dir));
       let chum_dir = Path::new(target).join(".chum");
 
+      // Making sure the target is not a file
       if target.exists() {
-        let dir_metadata = fs::metadata(&target).unwrap();
-        if dir_metadata.is_file() {
-          return Err((
-            1,
-            format!(
-              "{} is a file. Please specify a directory to initialize a chum project in",
-              target.display()
-            ),
-          ));
+        let dir_metadata = fs::metadata(&target);
+        match dir_metadata {
+          Ok(metadata) => {
+            if metadata.is_file() {
+              return Err((
+                1,
+                format!(
+                  "{} is a file. Please specify a directory to initialize a chum project in",
+                  target.display()
+                ),
+              ));
+            }
+          }
+          Err(e) => {
+            return Err((
+              1,
+              format!("Failed to read metadata of {}: {}", target.display(), e),
+            ));
+          }
         }
       }
 
+      // Checking if a chum project already exists in the target directory
       if chum_dir.exists() {
         let chum_metadata = fs::metadata(&chum_dir).unwrap();
         if chum_metadata.is_dir() {
@@ -60,13 +72,24 @@ pub fn get_command() -> Command {
         }
       }
 
-      fs::create_dir_all(&chum_dir).unwrap();
-      display::success(format!(
-        "Created {}",
-        util::get_full_path(chum_dir.clone()).display()
-      ));
+      // Creating the chum project directory
+      let create_result = fs::create_dir_all(&chum_dir);
+      match create_result {
+        Ok(_) => {
+          display::success(format!(
+            "Created {}",
+            util::get_full_path(chum_dir.clone()).display()
+          ));
+        }
+        Err(e) => {
+          return Err((1, format!("Failed to create {}: {}", chum_dir.display(), e)));
+        }
+      }
 
       // TODO: Create initial compressed files
+
+      let files_result = util::read_dir_recursive(&target).unwrap();
+      println!("{:?}", files_result);
 
       Ok(0)
     }),
