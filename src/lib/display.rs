@@ -32,4 +32,11 @@ pub fn writeln(colour: Color, msg: String) {
       println!("{}", msg);
     }
   }
+
+  match stdout.reset() {
+    Ok(_) => {}
+    Err(e) => {
+      eprintln!("Failed to reset stdout after colour change: {}", e);
+    }
+  }
 }
