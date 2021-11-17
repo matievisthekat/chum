@@ -1,0 +1,6 @@
+; use semi-colons to denote comments
+; every line represents a new ignore
+; lines must exactly match the ignored file or folder name
+; chum ignores the ./.git and ./.chum directories by default
+
+./target

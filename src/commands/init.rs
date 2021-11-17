@@ -86,10 +86,76 @@ pub fn get_command() -> Command {
         }
       }
 
-      // TODO: Create initial compressed files
+      let ignore_file = target.join(".chumignore");
+      let mut ignore_content_lines = vec![];
+      if ignore_file.exists() {
+        let metadata_result = fs::metadata(&ignore_file);
+        match metadata_result {
+          Ok(metadata) => {
+            if metadata.is_file() {
+              match util::read_file_to_string(&ignore_file) {
+                Ok(string) => {
+                  let all_lines = string.split("\n").collect::<Vec<&str>>();
+                  for line in all_lines {
+                    // Ingore empty or comment lines
+                    if line.len() > 0 && !line.starts_with(";") {
+                      ignore_content_lines.push(line.to_string());
+                    }
+                  }
+                }
+                Err(e) => {
+                  return Err(e);
+                }
+              }
+            } else {
+              display::warn(format!(
+                "Ignore file ({}) is not a file",
+                ignore_file.display()
+              ));
+            }
+          }
+          Err(e) => {
+            return Err((
+              1,
+              format!(
+                "Failed to read metadata of {}: {}",
+                ignore_file.display(),
+                e
+              ),
+            ));
+          }
+        }
+      } else {
+        display::warn(format!("Ignore file ({}) does not exist. It is strongly recommended to have a .chumignore file at the root of your chum project", ignore_file.display()));
+      }
 
-      let files_result = util::read_dir_recursive(&target).unwrap();
-      println!("{:?}", files_result);
+      let files_result = util::read_dir_recursive(&target);
+      let mut files_filtered = vec![];
+      match files_result {
+        Ok(files) => {
+          for file in files {
+            if !file.starts_with("./.chum") && !file.starts_with("./.git") {
+              let mut ignored = false;
+              for ignore_line in &ignore_content_lines {
+                if file.starts_with(&ignore_line) {
+                  ignored = true;
+                  break;
+                }
+              }
+
+              if !ignored {
+                files_filtered.push(file);
+              }
+            }
+          }
+        }
+        Err(e) => {
+          return Err((
+            1,
+            format!("Failed to read target directory contents: {}", e),
+          ));
+        }
+      }
 
       Ok(0)
     }),
