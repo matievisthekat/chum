@@ -1,5 +1,13 @@
+use sha1::{Digest, Sha1};
 use std::fs;
 use std::path::{Path, PathBuf};
+
+pub fn sha1(s: &str) -> String {
+  let mut hasher = Sha1::new();
+  hasher.update(s.as_bytes());
+  let res = hasher.finalize();
+  format!("{:x}", res)
+}
 
 pub fn get_full_path(p: PathBuf) -> PathBuf {
   let result = fs::canonicalize(&p);

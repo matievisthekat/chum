@@ -157,6 +157,19 @@ pub fn get_command() -> Command {
         }
       }
 
+      let origin = chum_dir.join("origin");
+      let create_origin_result = fs::create_dir_all(&origin);
+      match create_origin_result {
+        Ok(_) => {
+          for file in files_filtered {
+            let file_path = Path::new(&file);
+            let hashed_filename = util::sha1(file_path.file_name().unwrap().to_str().unwrap());
+            let new_file_path = origin.join(hashed_filename);
+          }
+        }
+        Err(e) => return Err((1, format!("Failed to create origin directory: {}", e))),
+      }
+
       Ok(0)
     }),
   }
