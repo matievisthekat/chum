@@ -1,3 +1,4 @@
+use crate::lib::compression;
 use crate::lib::{command_manager::Command, display, util};
 use std::fs;
 use std::path::Path;
@@ -161,10 +162,37 @@ pub fn get_command() -> Command {
       let create_origin_result = fs::create_dir_all(&origin);
       match create_origin_result {
         Ok(_) => {
-          for file in files_filtered {
-            let file_path = Path::new(&file);
+          for file_path in files_filtered {
             let hashed_filename = util::sha1(file_path.file_name().unwrap().to_str().unwrap());
             let new_file_path = origin.join(hashed_filename);
+            let read_result = fs::read(&file_path);
+
+            match read_result {
+              Ok(bytes) => {
+                let compressed_bytes = compression::compress(&bytes);
+                let write_result = fs::write(&new_file_path, compressed_bytes);
+                match write_result {
+                  Ok(_) => {}
+                  Err(e) => {
+                    return Err((
+                      1,
+                      format!(
+                        "Failed to write compressed contents of {} to {}: {}",
+                        file_path.display(),
+                        new_file_path.display(),
+                        e
+                      ),
+                    ))
+                  }
+                }
+              }
+              Err(e) => {
+                return Err((
+                  1,
+                  format!("Failed to read file {}: {}", file_path.display(), e),
+                ))
+              }
+            }
           }
         }
         Err(e) => return Err((1, format!("Failed to create origin directory: {}", e))),
