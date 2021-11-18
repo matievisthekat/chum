@@ -9,6 +9,42 @@ pub fn sha1(s: &str) -> String {
   format!("{:x}", res)
 }
 
+pub fn get_current_chum_dir() -> Result<PathBuf, (i32, String)> {
+  let chum_path = Path::new("./.chum");
+  if !chum_path.exists() {
+    return Err((
+          1,
+          format!(
+            "Your current working directory ({}) does not have a chum project initialized. Run 'chum init' to initialize a new project",
+            get_full_path(std::env::current_dir().unwrap_or(PathBuf::new())).display())
+        ));
+  }
+
+  let metadata_result = fs::metadata(chum_path);
+  match metadata_result {
+    Ok(metadata) => {
+      if !metadata.is_dir() {
+        return Err((
+          1,
+          format!("Your current chum project ({}) is not a directory. Remove the '.chum' file and run 'chum init .' to initialize a chum project", get_full_path(PathBuf::from(chum_path)).display())
+        ));
+      } else {
+        return Ok(PathBuf::from(chum_path));
+      }
+    }
+    Err(e) => {
+      return Err((
+        1,
+        format!(
+          "Failed to fetch metadata for your current chum project ({}): {}",
+          get_full_path(PathBuf::from(chum_path)).display(),
+          e
+        ),
+      ));
+    }
+  }
+}
+
 pub fn get_full_path(p: PathBuf) -> PathBuf {
   let result = fs::canonicalize(&p);
 

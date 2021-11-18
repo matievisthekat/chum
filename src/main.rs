@@ -9,6 +9,7 @@ fn main() {
 
     cli.register_command(commands::help::get_command());
     cli.register_command(commands::init::get_command());
+    cli.register_command(commands::status::get_command());
 
     cli.register_flag(
         "version",
