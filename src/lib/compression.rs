@@ -23,9 +23,9 @@ pub fn compress(input: &Vec<u8>) -> Vec<u8> {
 }
 
 #[allow(dead_code)]
-pub fn decompress(input: &[u8]) -> String {
-  let mut output = String::new();
+pub fn decompress(input: &[u8]) -> Vec<u8> {
+  let mut output = vec![];
   let mut decoder = ZlibDecoder::new(input);
-  decoder.read_to_string(&mut output).unwrap();
+  decoder.read(&mut output).unwrap();
   output
 }
