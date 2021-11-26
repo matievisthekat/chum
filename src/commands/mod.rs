@@ -1,3 +1,3 @@
 pub mod help;
 pub mod init;
-pub mod status;
+pub mod state;

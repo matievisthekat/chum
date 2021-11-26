@@ -1,3 +1,4 @@
+use crate::lib::display;
 use sha1::{Digest, Sha1};
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -81,6 +82,51 @@ pub fn read_file_to_string(p: &Path) -> Result<String, (i32, String)> {
         format!("Failed to read the contents of {}: {}", p.display(), e),
       ));
     }
+  }
+}
+
+pub fn filter_ignored(paths: Vec<PathBuf>) -> Result<Vec<PathBuf>, (i32, String)> {
+  let mut ignore_content_lines = vec![];
+  let ignore_file = Path::new(".chumignore");
+
+  if !ignore_file.exists() {
+    display::warn(format!("Ignore file ({}) does not exist. It is strongly recommended to have a .chumignore file at the root of your chum project", ignore_file.display()));
+    return Ok(paths);
+  } else {
+    match read_file_to_string(&ignore_file) {
+      Ok(string) => {
+        let all_lines = string.split("\n").collect::<Vec<&str>>();
+        for line in all_lines {
+          // Ingore empty or comment lines
+          if line.len() > 0 && !line.starts_with(";") {
+            ignore_content_lines.push(line.to_string());
+          }
+        }
+      }
+      Err(e) => {
+        return Err(e);
+      }
+    }
+
+    let mut filtered_paths = vec![];
+
+    for path in paths {
+      if !path.starts_with("./.chum") && !path.starts_with("./.git") {
+        let mut ignored = false;
+        for ignore_line in &ignore_content_lines {
+          if path.starts_with(ignore_line) {
+            ignored = true;
+            break;
+          }
+        }
+
+        if !ignored {
+          filtered_paths.push(path);
+        }
+      }
+    }
+
+    Ok(filtered_paths)
   }
 }
 
