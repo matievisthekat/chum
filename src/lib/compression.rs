@@ -23,7 +23,7 @@ pub fn compress(input: &Vec<u8>) -> Vec<u8> {
 }
 
 #[allow(dead_code)]
-pub fn decompress(input: Box<dyn Read>) -> String {
+pub fn decompress(input: &[u8]) -> String {
   let mut output = String::new();
   let mut decoder = ZlibDecoder::new(input);
   decoder.read_to_string(&mut output).unwrap();
