@@ -158,7 +158,7 @@ pub fn get_command() -> Command {
         }
       }
 
-      let origin = chum_dir.join("origin");
+      let origin = chum_dir.join("0");
       let create_origin_result = fs::create_dir_all(&origin);
       match create_origin_result {
         Ok(_) => {
