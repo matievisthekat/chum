@@ -54,7 +54,7 @@ pub fn get_full_path(p: PathBuf) -> PathBuf {
   }
 }
 
-pub fn read_file_to_string(p: &PathBuf) -> Result<String, (i32, String)> {
+pub fn read_file_to_string(p: &Path) -> Result<String, (i32, String)> {
   let content_result = fs::read(&p);
   match content_result {
     Ok(content_bytes) => {
