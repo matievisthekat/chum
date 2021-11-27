@@ -87,30 +87,30 @@ pub fn get_command() -> Command {
         }
       }
 
-      let files_result = util::read_dir_recursive(&target);
-      let mut files_filtered = vec![];
-      match files_result {
-        Ok(files) => {
-          let result = util::filter_ignored(files);
-          match result {
-            Ok(filtered) => {
-              files_filtered = filtered;
-            }
-            Err(e) => return Err(e),
-          }
-        }
-        Err(e) => {
-          return Err((
-            1,
-            format!("Failed to read target directory contents: {}", e),
-          ));
-        }
-      }
-
       let origin = chum_dir.join("0");
       let create_origin_result = fs::create_dir_all(&origin);
       match create_origin_result {
         Ok(_) => {
+          let files_result = util::read_dir_recursive(&target);
+          let mut files_filtered = vec![];
+          match files_result {
+            Ok(files) => {
+              let result = util::filter_ignored(files);
+              match result {
+                Ok(filtered) => {
+                  filtered.into_iter().for_each(|f| files_filtered.push(f));
+                }
+                Err(e) => return Err(e),
+              }
+            }
+            Err(e) => {
+              return Err((
+                1,
+                format!("Failed to read target directory contents: {}", e),
+              ));
+            }
+          }
+
           for file_path in files_filtered {
             let hashed_filename = util::sha1(file_path.file_name().unwrap().to_str().unwrap());
             let new_file_path = origin.join(hashed_filename);
